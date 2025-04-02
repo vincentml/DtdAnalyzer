@@ -295,6 +295,7 @@
                            <ul>
                               <xsl:apply-templates select="$dtd1-attributes">
                                  <xsl:with-param name="compare" select="$dtd2-attributes"/>
+                                 <xsl:sort select="../@name"/>
                               </xsl:apply-templates>
                            </ul>
                         </xsl:when>
@@ -310,6 +311,7 @@
                            <ul>
                               <xsl:apply-templates select="$dtd2-attributes">
                                  <xsl:with-param name="compare" select="$dtd1-attributes"/>
+                                 <xsl:sort select="../@name"/>
                               </xsl:apply-templates>
                            </ul>
                         </xsl:when>
