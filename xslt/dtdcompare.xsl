@@ -26,6 +26,8 @@
         templates to dtd2 -->
    <xsl:variable name="dtd1" select="/"/>
    <xsl:variable name="dtd2" select="document($dtd2-loc)"/>
+   
+   <xsl:variable name="style-diff" select="'background-color: #FFCCCC;'"/>
 
    <xsl:variable name='dtd1-title'>
      <xsl:choose>
@@ -160,11 +162,69 @@
         Clean up the text so add whitespace after ',' and '|': so can flow the text-->
    <!-- ============================================================================== -->
    <xsl:template match="@minified">
-      <xsl:call-template name="insert-whitespace">
-         <xsl:with-param name="text" select="."/>
-      </xsl:call-template>
+      <xsl:param name="compare"/>
+      <xsl:choose>
+         <xsl:when test="not($compare)">
+            <xsl:call-template name="insert-whitespace">
+               <xsl:with-param name="text" select="."/>
+            </xsl:call-template>
+         </xsl:when>
+         <xsl:otherwise>
+            <xsl:variable name="compareA">
+               <a>
+                  <xsl:call-template name="tokenize-text">
+                     <xsl:with-param name="text">
+                        <xsl:call-template name="insert-whitespace">
+                           <xsl:with-param name="text" select="."/>
+                        </xsl:call-template>
+                     </xsl:with-param>
+                  </xsl:call-template>
+               </a>
+            </xsl:variable>
+            <xsl:variable name="compareB">
+               <b>
+                  <xsl:call-template name="tokenize-text">
+                     <xsl:with-param name="text">
+                        <xsl:call-template name="insert-whitespace">
+                           <xsl:with-param name="text" select="$compare"/>
+                        </xsl:call-template>
+                     </xsl:with-param>
+                  </xsl:call-template>
+               </b>
+            </xsl:variable>
+            <xsl:for-each select="$compareA/a/t">
+               <xsl:variable name="position" select="position()"/>
+               <xsl:choose>
+                  <xsl:when test=". = $compareB/b/t[$position]">
+                     <xsl:value-of select="."/>
+                  </xsl:when>
+                  <xsl:otherwise>
+                     <span style="{$style-diff}'">
+                        <xsl:value-of select="."/>
+                     </span>
+                  </xsl:otherwise>
+               </xsl:choose>
+            </xsl:for-each>
+         </xsl:otherwise>
+      </xsl:choose>
    </xsl:template>
-
+   
+   <xsl:template name="tokenize-text">
+      <xsl:param name="text" select="''"/>
+      <xsl:param name="separator" select="' '"/>
+      <xsl:choose>
+         <xsl:when test="contains($text, $separator)">
+            <t><xsl:value-of select="concat(substring-before($text, $separator), $separator)"/></t>
+            <xsl:call-template name="tokenize-text">
+               <xsl:with-param name="text" select="substring-after($text, $separator)"/>
+            </xsl:call-template>
+         </xsl:when>
+         <xsl:otherwise>
+            <t><xsl:value-of select="$text"/></t>
+         </xsl:otherwise>
+      </xsl:choose>
+   </xsl:template>
+   
    <!-- ============================================================================== -->
    <!-- element
         mode: common-check
@@ -209,10 +269,14 @@
                </tr>
                <tr>
                   <td>
-                     <xsl:apply-templates select="content-model/@minified"/>
+                     <xsl:apply-templates select="content-model/@minified">
+                        <xsl:with-param name="compare" select="$dtd2-element/content-model/@minified"/>
+                     </xsl:apply-templates>
                   </td>
                   <td>
-                     <xsl:apply-templates select="$dtd2-element/content-model/@minified"/>
+                     <xsl:apply-templates select="$dtd2-element/content-model/@minified">
+                        <xsl:with-param name="compare" select="content-model/@minified"/>
+                     </xsl:apply-templates>
                   </td>
                </tr>
             </xsl:if>
@@ -229,7 +293,9 @@
                      <xsl:choose>
                         <xsl:when test="$dtd1-attributes">
                            <ul>
-                              <xsl:apply-templates select="$dtd1-attributes"/>
+                              <xsl:apply-templates select="$dtd1-attributes">
+                                 <xsl:with-param name="compare" select="$dtd2-attributes"/>
+                              </xsl:apply-templates>
                            </ul>
                         </xsl:when>
 
@@ -242,7 +308,9 @@
                      <xsl:choose>
                         <xsl:when test="$dtd2-attributes">
                            <ul>
-                              <xsl:apply-templates select="$dtd2-attributes"/>
+                              <xsl:apply-templates select="$dtd2-attributes">
+                                 <xsl:with-param name="compare" select="$dtd1-attributes"/>
+                              </xsl:apply-templates>
                            </ul>
                         </xsl:when>
 
@@ -344,7 +412,21 @@
         Basic display of attributeDeclaration: will always be part of a list -->
    <!-- ============================================================================== -->
    <xsl:template match="attributeDeclaration">
+      <xsl:param name="compare"/>
       <li>
+         <xsl:if test="$compare">
+            <xsl:variable name="compareA" select="concat('^^', parent::attribute/@name, '++', @type, '++', @mode, '$$')"/>
+            <xsl:variable name="compareB">
+               <xsl:for-each select="$compare">
+                  <xsl:value-of select="concat('^^', parent::attribute/@name, '++', @type, '++', @mode, '$$')"/>
+               </xsl:for-each>
+            </xsl:variable>
+            <xsl:if test="not(contains($compareB, $compareA))">
+                  <xsl:attribute name="style">
+                     <xsl:value-of select="$style-diff"/>
+                  </xsl:attribute>
+               </xsl:if>
+         </xsl:if>
          <xsl:value-of select="parent::attribute/@name"/>
          <xsl:text> Type: </xsl:text>
 
