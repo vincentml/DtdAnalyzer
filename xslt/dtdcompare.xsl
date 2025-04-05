@@ -348,7 +348,9 @@
 
                <xsl:if test="/declarations/attributes/attribute/attributeDeclaration[@element = $current-name]">
                   <ul>
-                     <xsl:apply-templates select="/declarations/attributes/attribute/attributeDeclaration[@element = $current-name]"/>
+                     <xsl:apply-templates select="/declarations/attributes/attribute/attributeDeclaration[@element = $current-name]">
+                        <xsl:sort select="../@name"/>
+                     </xsl:apply-templates>
                   </ul>
                </xsl:if>
             </td>
@@ -385,7 +387,9 @@
 
                <xsl:if test="$dtd2/declarations/attributes/attribute/attributeDeclaration[@element = $current-name]">
                   <ul>
-                     <xsl:apply-templates select="$dtd2/declarations/attributes/attribute/attributeDeclaration[@element = $current-name]"/>
+                     <xsl:apply-templates select="$dtd2/declarations/attributes/attribute/attributeDeclaration[@element = $current-name]">
+                        <xsl:sort select="../@name"/>
+                     </xsl:apply-templates>
                   </ul>
                </xsl:if>
             </td>
